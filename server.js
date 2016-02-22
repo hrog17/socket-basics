@@ -19,6 +19,7 @@ io.on('connection', function(socket) {
     });
     // 1st argument - is any event string name
     socket.emit('message', {
+        name: 'System',
         text: 'Welcome to the chat application',
         timestamp: now.valueOf()
     });

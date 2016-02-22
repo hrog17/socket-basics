@@ -1,7 +1,7 @@
 var moment = require('moment');
 var now = moment();
 
-console.log(now.format());
+console.log(now.format('x'));
 
 // now.subtract(1, 'year')
 //
