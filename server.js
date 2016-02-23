@@ -11,6 +11,29 @@ app.use(express.static(__dirname + '/public'));
 
 var clientInfo = {};
 
+// Sends current users to provided socket
+function sendCurrentUsers(socket) {
+    var info = clientInfo[socket.id];
+    var users = [];
+
+    if (typeof info === 'undefined') {
+        return;
+    }
+
+    Object.keys(clientInfo).forEach(function(socketId) {
+        var userInfo = clientInfo[socketId];
+        if (info.room === userInfo.room) {
+            users.push(userInfo.name);
+        }
+    });
+
+    socket.emit('message', {
+        name: 'System',
+        text: 'Current users: ' + users.join(', '),
+        timestamp: moment().valueOf //merges array with char
+    });
+}
+
 io.on('connection', function(socket) {
     console.log('User connected via socket.io!');
 
@@ -35,21 +58,28 @@ io.on('connection', function(socket) {
         socket.broadcast.to(req.room).emit('message', {
             name: 'System',
             text: req.name + ' has joined!',
-            timestamp: now.valueOf()
+            timestamp: moment().valueOf()
         });
     });
 
     socket.on('message', function(message) {
         console.log('Message received: ' + message.text);
-        message.timestamp = now.valueOf();
-        io.to(clientInfo[socket.id].room).emit('message',
-            message);
+
+        // Add support for special command
+        if (message.text === '@currentUsers') {
+            sendCurrentUsers(socket);
+        } else {
+            message.timestamp = now.valueOf();
+            io.to(clientInfo[socket.id].room).emit('message',
+                message);
+        }
     });
+
     // 1st argument - is any event string name
     socket.emit('message', {
         name: 'System',
         text: 'Welcome to the chat application',
-        timestamp: now.valueOf()
+        timestamp: moment().valueOf()
     });
 });
 
