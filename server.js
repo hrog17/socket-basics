@@ -9,13 +9,27 @@ var now = moment();
 
 app.use(express.static(__dirname + '/public'));
 
+var clientInfo = {};
+
 io.on('connection', function(socket) {
     console.log('User connected via socket.io!');
 
+    // event to join room
+    socket.on('joinRoom', function(req) {
+        clientInfo[socket.id] = req;
+        socket.join(req.room);
+        socket.broadcast.to(req.room).emit('message', {
+            name: 'System',
+            text: req.name = ' has joined!',
+            timestamp: now.valueOf()
+        });
+    });
+
     socket.on('message', function(message) {
         console.log('Message received: ' + message.text);
-
-        io.emit('message', message);
+        message.timestamp = now.valueOf();
+        io.to(clientInfo[socket.id].room).emit('message',
+            message);
     });
     // 1st argument - is any event string name
     socket.emit('message', {
